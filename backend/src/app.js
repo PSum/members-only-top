@@ -169,6 +169,8 @@ function verifyToken(req, res, next) {
   const bearerHeader = req.headers['authorization'];
   // Check if bearer is undefined
   if(typeof bearerHeader !== 'undefined') {
+    // Split at the space
+    const bearer = bearerHeader.split(' ');
 
   } else {
     // Forbidden
