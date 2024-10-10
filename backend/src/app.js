@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express')
 const session = require('express-session')
+const jwt = require('jsonwebtoken')
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const pool = require('./db/pool')
@@ -50,6 +51,35 @@ passport.deserializeUser(async (id, done) => {
     done(err);
   }
 });
+
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Welcome to the API'
+  });
+});
+
+app.post('/api/posts', verifyToken, (req, res) => {
+  res.json({
+    message: 'Post created!'
+  });
+});
+
+app.post('/api/login', (req, res) => {
+  // Do authentication here with database and get user back from database
+  // Mock user
+  const user = {
+    id: 1,
+    username: 'Mike',
+    email: 'mike@gmail.com',
+  }
+
+  jwt.sign({user: user}, 'secretkey', (err, token) => {
+    res.json({
+      token: token
+    });
+  });
+});
+
 
 app.post("/log-in", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
@@ -132,5 +162,19 @@ app.get("/deleteAll", async (req,res) => {
         res.sendStatus(500);
     }
 })
+
+// Verfigy Token
+function verifyToken(req, res, next) {
+  // Get auth header value
+  const bearerHeader = req.headers['authorization'];
+  // Check if bearer is undefined
+  if(typeof bearerHeader !== 'undefined') {
+
+  } else {
+    // Forbidden
+    res.sendStatus(403);
+  }
+
+}
 
 app.listen(port, () => console.log(`Server has started on port: ${port}`))
