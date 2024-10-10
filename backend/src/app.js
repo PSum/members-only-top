@@ -1,22 +1,28 @@
 require('dotenv').config();
+// express stuff
 const express = require('express')
 const session = require('express-session')
+const bodyParser = require('body-parser');
+const app = express()
+
 const jwt = require('jsonwebtoken')
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-const pool = require('./db/pool')
 const cors = require('cors');
-const databaseName = "membersOnly"
 
+const pool = require('./db/pool')
+
+const databaseName = "membersOnly"
 const port = process.env.PORT;
 
 
 
-const app = express()
 app.use(express.json())
 app.use(cors());
 app.use(session({ secret: "cats", resave: false, saveUninitialized: false }));
 app.use(passport.session());
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
 
 passport.use(
   new LocalStrategy(async (username, password, done) => {
@@ -59,9 +65,16 @@ app.get('/api', (req, res) => {
 });
 
 app.post('/api/posts', verifyToken, (req, res) => {
-  res.json({
-    message: 'Post created!'
-  });
+  jwt.verify(req.token, 'secretkey', (err, authData) => {
+    if(err) {
+      res.sendStatus(403);
+    } else {
+      res.json({
+        message: 'Post created!',
+        authData
+      });
+    }
+  })
 });
 
 app.post('/api/login', (req, res) => {
@@ -73,8 +86,9 @@ app.post('/api/login', (req, res) => {
     email: 'mike@gmail.com',
   }
 
-  jwt.sign({user: user}, 'secretkey', (err, token) => {
+  jwt.sign({user: user}, 'secretkey', { expiresIn: '1h' },(err, token) => {
     res.json({
+      // Save this token in react in local storage and send it with the requests of the client
       token: token
     });
   });
@@ -171,7 +185,12 @@ function verifyToken(req, res, next) {
   if(typeof bearerHeader !== 'undefined') {
     // Split at the space
     const bearer = bearerHeader.split(' ');
-
+    // Get token from array
+    const bearerToken = bearer[1];
+    // Set the token
+    req.token = bearerToken;
+    // Next middleware
+    next();
   } else {
     // Forbidden
     res.sendStatus(403);
