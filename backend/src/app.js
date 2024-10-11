@@ -16,7 +16,8 @@ const LocalStrategy = require('passport-local');
 // database stuff
 const pool = require('./db/pool')
 const port = process.env.PORT;
-
+const saltRounds = 10;
+const bcrypt = require('bcrypt');
 
 app.use(express.json())
 app.use(cors());
@@ -29,6 +30,7 @@ passport.use(new LocalStrategy(
     }
     
     const match = await bcrypt.compare(password, rows[0].password);
+    console.log(match);
     if (match) {
       return done(null, rows[0]); // Authentication successful
     } else {
@@ -37,23 +39,35 @@ passport.use(new LocalStrategy(
   }
 ));
 
-app.post("/login", async (req, res) => {
-    let { username, password } = req.body;
-    //This lookup would normally be done using a database
-    const {rows} = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-    console.log(rows[0]);
-        if (password === rows[0].password) { //the password compare would normally be done using bcrypt.
-            const opts = {}
-            opts.expiresIn = 120;  //token expires in 2min
-            const secret = process.env.SECRETKEY; 
-            const token = jwt.sign({ username }, secret, opts);
-            return res.status(200).json({
-                message: "Auth Passed",
-                token
-            })
+app.post('/login', (req, res, next) => {
+    passport.authenticate('local', { session: false }, (err, user, info) => {
+        if (err || !user) {
+            return res.status(401).json({
+                message: info ? info.message : 'Login failed',
+                user   : user
+            });
         }
-    return res.status(401).json({message: "Invalid username or password"})
+
+        // Generate a JWT if authentication was successful
+        const token = jwt.sign(
+            { id: user.id, username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // Respond with the token and user info
+        return res.status(200).json({
+            message: 'Login successful',
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                membership: user.membership
+            }
+        });
+    })(req, res, next);
 });
+
 
 app.get("/protected", verifyToken , (req, res) => {
     return res.status(200).send("YAY! this is a protected Route")
@@ -70,15 +84,21 @@ app.get('/', async (req, res) => {
 })
 
 app.post('/addUser', async (req, res) => {
-    const {fullname, username, password, membership} = req.body
+    const { fullname, username, password, membership } = req.body;
+
     try {
-        await pool.query(`INSERT INTO users (fullname, username, password, membership) VALUES ($1, $2, $3, $4)`, [fullname, username, password, membership])
-        res.status(200).send({ message: "Successfully added child" })
+        // Hash the password before saving it
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Insert user into the database with the hashed password
+        await pool.query(`INSERT INTO users (fullname, username, password, membership) VALUES ($1, $2, $3, $4)`, [fullname, username, hashedPassword, membership]);
+
+        res.status(200).send({ message: "User successfully added" });
     } catch (err) {
-        console.log(err)
-        res.sendStatus(500)
+        console.log(err);
+        res.sendStatus(500);
     }
-})
+});
 
  app.get('/setupUser', async (req, res) => {
      try {
