@@ -23,6 +23,16 @@ router.get("/protected", passport.authenticate('jwt', {session: false}), (req, r
     });
 })
 
+router.get("/posts", passport.authenticate('jwt', {session: false}), async (req, res) => {
+    try {
+        const data = await pool.query('SELECT * FROM posts')
+        res.status(200).send(data.rows)
+    } catch (err) {
+        console.log(err);
+        res.json(500).send({message: err});
+    }
+})
+
 router.post('/addUser', async (req, res) => {
     const { fullname, username, password, membership } = req.body;
 
@@ -39,17 +49,18 @@ router.post('/addUser', async (req, res) => {
         res.sendStatus(500);
     }
 });
+ 
+router.post('/addPost', async (req, res) => {
+    const {timestamp, title, message, username} = req.body;
 
- router.get('/setupUser', async (req, res) => {
-     try {
-         await pool.query(
-           `CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, fullname VARCHAR(100), username VARCHAR(100), password VARCHAR(100), membership VARCHAR(100))`
-         );
-         res.status(200).send({ message: "Successfully created table" });
-     } catch (err) {
-         console.log(err)
-         res.sendStatus(500)
-     }
- })
+    try {
+        await pool.query(`INSERT INTO posts (timestamp, title, message, username) VALUES ($1, $2, $3, $4)`, [timestamp, title, message, username]);
+        res.status(200).send({message: 'Post successfully added!'});
+    } catch (err) {
+        console.log(err)
+        res.status(500).send({ error: err});
+    }
+})
+
 
  module.exports = router;

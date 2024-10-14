@@ -8,6 +8,7 @@ const passport = require('./config/passport');
 
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
+const setupRoutes = require('./routes/setupRoutes');
 
 // database stuff
 const port = process.env.PORT;
@@ -17,19 +18,9 @@ app.use(cors());
 
 app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
+app.use('/setup', setupRoutes);
 
 
-// app.get('/setupPosts', async (req, res) => {
-//     try {
-//         await pool.query(
-//           `CREATE TABLE IF NOT EXISTS posts (id SERIAL PRIMARY KEY, timestamp VARCHAR(100), title VARCHAR(100), message VARCHAR(400),  username VARCHAR(100))`
-//         );
-//         res.status(200).send({ message: "Successfully created table" });
-//     } catch (err) {
-//         console.log(err)
-//         res.sendStatus(500)
-//     }
-// })
 // 
 // app.get("/deleteAll", async (req,res) => {
 //     try{

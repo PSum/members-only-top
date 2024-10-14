@@ -7,8 +7,8 @@ export default function MessageBoard () {
 
     async function fetchData () {
         try {
-            const response = await axios.get('http://localhost:3000/users/protected', )
-            console.log(response);
+            const { data } = await axios.get('http://localhost:3000/users/posts', )
+            console.log(data[0]);
         } catch (error) {
             console.error('Error accessing protected route:', error);
         }
