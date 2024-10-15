@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-export default function LoginForm() {
+export default function LoginForm({ fetchData }) {
     const [formData, setFormData] = useState({username: '', password: ''});
     const [errorMessage, setErrorMessage] = useState('');
     const handleChange = (event) => {
@@ -28,6 +28,7 @@ export default function LoginForm() {
             localStorage.setItem('jwtToken', token);
 
             console.log('Token stored:', token);
+            fetchData();
 
             // Optionally, redirect the user to another page
             // window.location.href = '/dashboard'; // for example
