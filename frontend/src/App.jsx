@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import LoginForm from './LoginForm';
 import MessageBoard from './MessageBoard';
+import AddUser from './AddUser';
 import axios from 'axios';
 // Set token as a default authorization header for all requests
 axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('jwtToken')}`;
@@ -13,6 +14,7 @@ function App() {
         try {
             const { data } = await axios.get('http://localhost:3000/users/posts', )
             setPosts(data);
+            console.log('Data fetched succesfull')
         } catch (error) {
             console.error('Error accessing protected route:', error);
         }
@@ -20,11 +22,11 @@ function App() {
 
     useEffect(() => {
       fetchData();
-    }, [posts])
-
+    }, [])
 
   return (
     <>
+    <AddUser></AddUser>
     <LoginForm fetchData={fetchData}></LoginForm>
     <MessageBoard fetchData={fetchData} posts={posts}></MessageBoard>
     </>

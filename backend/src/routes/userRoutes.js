@@ -34,21 +34,27 @@ router.get("/posts", passport.authenticate('jwt', {session: false}), async (req,
 })
 
 router.post('/addUser', async (req, res) => {
-    const { fullname, username, password, membership } = req.body;
-
+    const { fullname, username, password, passcode } = req.body;
     try {
+        if (passcode ===process.env.PASSCODE){
         // Hash the password before saving it
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const membership = 'admin';
 
         // Insert user into the database with the hashed password
         await pool.query(`INSERT INTO users (fullname, username, password, membership) VALUES ($1, $2, $3, $4)`, [fullname, username, hashedPassword, membership]);
 
-        res.status(200).send({ message: "User successfully added" });
+        res.status(200).send({ message: `User successfully added` });
+        } else {
+            res.status(403).send({ message: 'Wrong passcode provided'})
+        }
     } catch (err) {
         console.log(err);
-        res.sendStatus(500);
+        res.status(500).send({ error: err});
     }
-});
+})
+
+
  
 router.post('/addPost', async (req, res) => {
     const {timestamp, title, message, username} = req.body;
@@ -58,7 +64,7 @@ router.post('/addPost', async (req, res) => {
         res.status(200).send({message: 'Post successfully added!'});
     } catch (err) {
         console.log(err)
-        res.status(500).send({ error: err});
+        res.json(500).send({message: err});
     }
 })
 

@@ -21,13 +21,14 @@ export default function LoginForm({ fetchData }) {
                 password: password,
             });
 
-            // Assuming the token is in response.data.token
             const token = response.data.token;
 
             // Store JWT in local storage
             localStorage.setItem('jwtToken', token);
 
-            console.log('Token stored:', token);
+            // Update header with new token so fetchData() can fetch the data for the messageBoard
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
             fetchData();
 
             // Optionally, redirect the user to another page
@@ -41,6 +42,8 @@ export default function LoginForm({ fetchData }) {
     };
 
     return (
+        <>
+        <h2>Login From:</h2>
         <form onSubmit={handleSubmit}>
             <label htmlFor="username">Username</label>
             <input type="text" id="username" name='username' value={formData.username} onChange={handleChange} />
@@ -51,5 +54,6 @@ export default function LoginForm({ fetchData }) {
 
             {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
         </form>
+        </>
     )
 }
