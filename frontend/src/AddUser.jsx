@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-export default function AddUser() {
+export default function AddUser({ fetchData }) {
     const [formData, setFormData] = useState({AddFullname: '', AddUsername: '', AddPassword: '', passcode: ''});
     const [errorMessage, setErrorMessage] = useState('');
     const handleChange = (event) => {
@@ -22,8 +22,19 @@ export default function AddUser() {
                 password: AddPassword,
                 passcode: passcode,
             });
-            console.log(response.data);
 
+            const responseLogin = await axios.post('http://localhost:3000/auth/login', {
+                username: AddUsername,
+                password: AddPassword,
+            });
+
+            const token = responseLogin.data.token;
+            // Store JWT in local storage
+            localStorage.setItem('jwtToken', token);
+            // Update header with new token so fetchData() can fetch the data for the messageBoard
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            fetchData();
+            setFormData({AddFullname: '', AddUsername: '', AddPassword: '', passcode: ''})
         } catch (error) {
             // Handle login errors (e.g., incorrect credentials)
             setErrorMessage('Creation of user failed. You provided the wrong passcode');

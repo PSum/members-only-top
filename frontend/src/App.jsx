@@ -26,7 +26,7 @@ function App() {
 
   return (
     <>
-    <AddUser></AddUser>
+    <AddUser fetchData={fetchData}></AddUser>
     <LoginForm fetchData={fetchData}></LoginForm>
     <MessageBoard fetchData={fetchData} posts={posts}></MessageBoard>
     </>
